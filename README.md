@@ -36,7 +36,46 @@ No Fraud / Node Forward Bot
 6. 绑定kv数据库，创建一个Namespace Name为`nfd`的kv数据库，在setting -> variable中设置`KV Namespace Bindings`：nfd -> nfd
 7. 点击`Quick Edit`，复制[这个文件](./worker.js)到编辑器中
 8. 通过打开`https://xxx.workers.dev/registerWebhook`来注册websoket
+### 新增变量说明（人机验证相关）
 
+#### 环境变量
+
+- `ENV_VERIFY_SHOW`
+  - 类型：文本变量
+  - 作用：发送给用户看的「验证内容」。
+  - 机器人会这样提示用户：
+    > 为防止广告骚扰，请回复下面的内容完成验证：  
+    >  
+    > `ENV_VERIFY_SHOW`  
+    >  
+    > 只需把这句话原样发给我即可。
+  - 示例：
+    - `我不是广告`
+    - `我已阅读并理解注意事项`
+
+- `ENV_VERIFY_REAL`
+  - 类型：文本变量
+  - 作用：真正用来判断用户是否通过验证的值。
+  - 代码逻辑：
+    - 当用户发送的文本 `text` 满足 `text === ENV_VERIFY_REAL` 时，判定为验证通过；
+    - 否则继续返回提示，让用户按照 `ENV_VERIFY_SHOW` 的内容重新发送。
+  - 推荐用法：
+    - 一般情况下，设置为与 `ENV_VERIFY_SHOW` 相同，用户看到什么就发什么即可通过验证；
+    - 如需自定义逻辑（例如内部只认 `1`），可以设置为不同的值：
+      - `ENV_VERIFY_SHOW = 我不是广告`
+      - `ENV_VERIFY_REAL = 1`
+
+#### KV 记录（使用已有命名空间 `nfd`）
+
+- `verified-<chatId>`
+  - 作用：标记某个用户是否已通过人机验证。
+  - 类型：存储 `true`（通过）或空/不存在（未通过）。
+  - 行为：
+    - 当键不存在或值不是 `true` 时，用户发送任何消息都会被引导去完成验证；
+    - 验证通过后写入 `true`，之后该用户的消息会直接转发给管理员处理。
+
+
+用到的环境变量说明（ENV_BOT_TOKEN、ENV_BOT_SECRET、ENV_ADMIN_UID、ENV_VERIFY_SHOW、ENV_VERIFY_REAL、KV nfd）
 ## 使用方法
 - 当其他用户给bot发消息，会被转发到bot创建者
 - 用户回复普通文字给转发的消息时，会回复到原消息发送者
@@ -49,3 +88,5 @@ No Fraud / Node Forward Bot
 
 ## Thanks
 - [telegram-bot-cloudflare](https://github.com/cvzi/telegram-bot-cloudflare)
+这是基于 nfd 改的 Cloudflare Worker
+
